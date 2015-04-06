@@ -21,15 +21,24 @@ header {
     z-index: 1;
 }
 
-.saved-locations {
-	position: absolute;
-	top: 10em;
-	left: 15px;
+.saved-locations, .search-history {
     width: 20%;
     height: 100%;
     margin: 10px auto;
     background-color: rgba(255,255,255,0.4);
     z-index: 2;
+}
+
+.saved-locations {
+    position: absolute;
+    top: 10em;
+    left: 15px;
+}
+
+.search-history {
+    position: absolute;
+    top: 10em;
+    right: 15px;
 }
 
 
