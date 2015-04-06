@@ -76,9 +76,11 @@
     </div>
 
     <div class="search-history">
-        <h3>Search history</h3>
-        <button class="clear-history" data-bind="click: clearHistory">Clear history</button>
-        <ul class="address-list" data-bind="foreach: searchCache">
+        <div class="row">
+            <h4>Search history</h4>
+            <button class="clear-history" data-bind="click: clearHistory">Clear</button>
+        </div>
+        <ul class="address-list" data-bind="foreach: searchHistory">
             <li class="address-list-item">
                 <a data-bind="click: update"><span data-bind="text: address"></span></a>
                 <button class="save-entry" data-bind="click: save">Save</button>

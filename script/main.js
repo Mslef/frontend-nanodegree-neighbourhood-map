@@ -3,6 +3,71 @@ var displayValues = [];
 var infowindow = new google.maps.InfoWindow();
 var marker;
 
+// TODO: Add NYT, Wikipedia, Yahoo Weather and StreetView data to the content string
+var contentString = "<div id='content'>"+
+    "<div id='siteNotice'>"+
+    "</div>"+
+    "<h1 id='firstHeading' class='firstHeading'>Uluru</h1>"+
+    "<button>Add to my list</button>"+
+    "<div id='bodyContent'>"+
+    "<p>Nyt</p>"+
+    "<p>Wikipedia</p>"+
+    "<p>Yahoo Weather</p>"+
+    "<p>StreetView iframe</p>"+
+    "</div>"+
+    "</div>";
+
+// Maps functions
+/*
+map.setZoom(11);
+
+// Infowindow functions
+infowindow.setContent(results[1].formatted_address);
+infowindow.open(map, marker);
+
+
+// Sets the map on all markers in the array.
+function setAllMap(map) {
+  for (var i = 0; i < markers.length; i++) {
+    markers[i].setMap(map);
+  }
+}
+
+// Removes the markers from the map, but keeps them in the array.
+function clearMarkers() {
+  setAllMap(null);
+}
+
+// Shows any markers currently in the array.
+function showMarkers() {
+  setAllMap(map);
+}
+
+// Deletes all markers in the array by removing references to them.
+function deleteMarkers() {
+  clearMarkers();
+  markers = [];
+}
+*/
+
+// Add a marker to the map and push to the array.
+function addMarker(location) {
+  var infowindow = new google.maps.InfoWindow({
+        content: contentString
+    });
+
+  var marker = new google.maps.Marker({
+    position: location,
+    map: map,
+    title: 'test Title'
+  });
+  markers.push(marker);
+  google.maps.event.addListener(marker, 'click', function() {
+      infowindow.open(map,marker);
+    });
+}
+
+
 var findInfo = function() {
     var entry = new AddressEntry();
     geocoder.geocode( { 'address': viewModel.address()}, function(results, status) {
@@ -20,8 +85,8 @@ var findInfo = function() {
             entry.streetViewURL = 'https://maps.googleapis.com/maps/api/streetview?size=600x400&location=' + results[0].geometry.location.k+', '+results[0].geometry.location.D;
             entry.nytURL = 'http://api.nytimes.com/svc/search/v2/articlesearch.json?q=' + viewModel.address()+'&=sort=newest&api-key=773fe7f4f46bee0b96f79fa100da469a:11:71760315';
 
-            // Add to the beginning of the list
-            viewModel.searchCache.unshift(entry);
+            // Add to the beginning of the search history array
+            viewModel.searchHistory.unshift(entry);
 
         } else {
             alert('Geocode was not successful for the following reason: ' + status);
@@ -70,18 +135,9 @@ var AddressEntry = function() {
 
 };
 
-// Maps functions
-/*
-map.setZoom(11);
-
-// Infowindow functions
-infowindow.setContent(results[1].formatted_address);
-infowindow.open(map, marker);
-*/
-
 var viewModel = {
     address: ko.observable(""),
-    searchCache: ko.observableArray(),
+    searchHistory: ko.observableArray(),
     mapsURL:ko.observable("https://maps.googleapis.com/maps/api/streetview?size=600x400&location=40.689556,-74.043539"),
     greeting: ko.observable("Where would you want to live?"),
     nytHeader: ko.observable("New York Times Articles"),
@@ -119,7 +175,7 @@ viewModel.addToAddressList = function() {
 };
 
 viewModel.clearHistory = function() {
-    viewModel.searchCache([]);
+    viewModel.searchHistory([]);
 };
 
 // Update the view
@@ -166,9 +222,7 @@ viewModel.loadData = function() {
     */
 };
 
-// TODO: implement a visible locations container, to sort and search trough;
+// TODO: implement a visible locations container, to sort and search through;
 
 
 ko.applyBindings(viewModel);
-
-// TODO: Grunt minification, uncss

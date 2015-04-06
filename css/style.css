@@ -16,6 +16,14 @@ header {
     z-index: 2;
 }
 
+.row {
+    width:100%;
+    display:-webkit-box;
+    display:-webkit-flex;
+    display:-ms-flexbox;
+    display:flex;
+}
+
 .map {
     height: 100%;
     z-index: 1;
