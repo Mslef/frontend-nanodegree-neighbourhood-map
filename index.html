@@ -1,17 +1,16 @@
+<!DOCTYPE html>
 <html>
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Neighbourhood Map</title>
-    <link href='http://fonts.googleapis.com/css?family=Exo' rel='stylesheet' type='text/css'>
+    <link href="http://fonts.googleapis.com/css?family=Exo" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
     <script src="bower_components/knockout/dist/knockout.js"></script>
-    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp"></script>
-    <script src="script/maps.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&signed_in=true"></script>
+    <script async src="script/maps.js"></script>
     <script>
       var map;
-      var markers = [];
-      var contentString = ""; 
       var geocoder;
 
       function initialize() {
@@ -23,39 +22,26 @@
           mapTypeId: google.maps.MapTypeId.TERRAIN
 
         };
-        map = new google.maps.Map(document.getElementById('map-canvas'),
+        map = new google.maps.Map(document.getElementById("map-canvas"),
             mapOptions);
-      
-          // This event listener will call addMarker() when the map is clicked.
-          google.maps.event.addListener(map, 'click', function(event) {
-            addMarker(event.latLng);
-          });
 
-          // TODO: Add NYT, Wikipedia, Yahoo Weather and StreetView data to the content string
-          contentString = '<div id="content">'+
-              '<div id="siteNotice">'+
-              '</div>'+
-              '<h1 id="firstHeading" class="firstHeading">Uluru</h1>'+
-              '<button>Add to my list</button>'+
-              '<div id="bodyContent">'+
-              '<p>Nyt</p>'+
-              '<p>Wikipedia</p>'+
-              '<p>Yahoo Weather</p>'+
-              '<p>StreetView iframe</p>'+
-              '</div>'+
-              '</div>';
+          // This event listener will call addMarker() when the map is clicked.
+          google.maps.event.addListener(map, "click", function(event) {
+            addMarker(event.latLng);
+            console.log(event.latLng);
+          });
 
           // Adds a marker at the center of the map.
           addMarker(haightAshbury);
         }
 
 
-      google.maps.event.addDomListener(window, 'load', initialize);
-      
-      // Code from udacity's FEND Project 2, interactive Resume
+      google.maps.event.addDomListener(window, "load", initialize);
+
+      // Code from udacity"s FEND Project 2, interactive Resume
       // Vanilla JS way to listen for resizing of the window
       // and adjust map bounds
-      window.addEventListener('resize', function(e) {
+      window.addEventListener("resize", function(e) {
       // Make sure the map bounds get updated on page resize
       map.fitBounds(mapBounds);
       });
@@ -69,16 +55,17 @@
         <form class="form-container">
             <label for="street">Street: </label><input type="text" data-bind="value: street">
             <label for="city">City: </label><input type="text" data-bind="value: city">
-            <button data-bind='click: loadData'>Submit</button>
+            <button data-bind="click: loadData">Submit</button>
         </form>
         <div id="panel">
-          <input onclick="clearMarkers();" type=button value="Hide Markers">
-          <input onclick="showMarkers();" type=button value="Show All Markers">
-          <input onclick="deleteMarkers();" type=button value="Delete Markers">
+          <input onclick="clearMarkers();" type="button" value="Hide Markers">
+          <input onclick="showMarkers();" type="button" value="Show All Markers">
+          <input onclick="deleteMarkers();" type="button" value="Delete Markers">
+          <input id="latlng" type="text" value="40.714224,-73.961452">
+          <input type="button" value="Reverse Geocode" onclick="codeLatLng()">
         </div>
     </header>
 
-    <section class="map-container">
         <div id="map-canvas" class="map"></div>
         <div class="saved-locations">
             <label>Search Entries</label><input type="text">
@@ -91,7 +78,6 @@
             <button data-bind="click: addToAddressList, visible: showAddButton">Add Location to List</button>
             <p class="warning" data-bind="visible: showWarning">Entry already added!</p>
         </div>
-    </section>
 
     <script src="bower_components/jquery/dist/jquery.min.js"></script>
     <script src="script/main.js"></script>
