@@ -1,31 +1,59 @@
+var markers = []; // Containes all saved markers and addresses
+var displayValues = [];
+var infowindow = new google.maps.InfoWindow();
+var marker;
 
-// Class for Address entries
-var AddressEntry = function() {
-    // Find the coordinates of the location, if successfull add Street View URL and location
-    this.nytURL = 'http://api.nytimes.com/svc/search/v2/articlesearch.json?q=' + viewModel.address()+'&=sort=newest&api-key=773fe7f4f46bee0b96f79fa100da469a:11:71760315';
-
-    var geocoder = new google.maps.Geocoder();
+var findInfo = function() {
+    var entry = new AddressEntry();
     geocoder.geocode( { 'address': viewModel.address()}, function(results, status) {
         if (status == google.maps.GeocoderStatus.OK) {
-            this.location = results[0].geometry.location;
-            this.streetViewURL = 'https://maps.googleapis.com/maps/api/streetview?size=600x400&location=' + results[0].geometry.location;
-
-            // Return complete address of the location from the coordinates
-            geocoder.geocode({'latLng': results[0].geometry.location}, function(results, status) {
-            if (status == google.maps.GeocoderStatus.OK) {
-              if (results[1]) {
-                this.address = results[1].formatted_address;
-              } else {
-                alert('No results found');
-              }
-            } else {
-              alert('Geocoder failed due to: ' + status);
-            }
+            // Center the map
+            map.setCenter(results[0].geometry.location);
+            var marker = new google.maps.Marker({
+                map: map,
+                position: results[0].geometry.location
             });
+
+            // Update the entry's info
+            entry.address = results[0].formatted_address;
+            entry.loc = results[0].geometry.location;
+            entry.streetViewURL = 'https://maps.googleapis.com/maps/api/streetview?size=600x400&location=' + results[0].geometry.location.k+', '+results[0].geometry.location.D;
+            entry.nytURL = 'http://api.nytimes.com/svc/search/v2/articlesearch.json?q=' + viewModel.address()+'&=sort=newest&api-key=773fe7f4f46bee0b96f79fa100da469a:11:71760315';
+
+            // Add to the beginning of the list
+            viewModel.searchCache.unshift(entry);
+
         } else {
             alert('Geocode was not successful for the following reason: ' + status);
         }
     });
+};
+
+
+// Class for Address entries
+var AddressEntry = function() {
+    // Save to the Address List
+    this.save = function() {
+        addressLength = viewModel.addressList().length;
+        for (var i = 0; i < addressLength; i++)  {
+            savedAddress = viewModel.addressList()[i].address;
+            console.log(savedAddress === this.address);
+            if (savedAddress === this.address){
+                // Show a warning for 0.5 seconds
+                viewModel.showWarning(true);
+                setTimeout(function(){
+                    viewModel.showWarning(false);
+                }, 500);
+
+                return;
+            }
+        }
+        // Add to beginning of the list
+        viewModel.addressList.unshift(this);
+        addMarker(this.address);
+
+
+    };
 
     // Remove this entry from addressList
     this.remove = function() {
@@ -34,7 +62,10 @@ var AddressEntry = function() {
 
     // Show this location on the map
     this.update = function() {
-        map.setCenter(this.location);
+        map.setCenter(this.loc);
+        infowindow.setContent(this.address);
+        infowindow.open(map, marker);
+
     };
 
 };
@@ -43,12 +74,6 @@ var AddressEntry = function() {
 /*
 map.setZoom(11);
 
-map.setCenter(results[0].geometry.location);
-var marker = new google.maps.Marker({
-map: map,
-position: results[0].geometry.location
-});
-
 // Infowindow functions
 infowindow.setContent(results[1].formatted_address);
 infowindow.open(map, marker);
@@ -56,6 +81,7 @@ infowindow.open(map, marker);
 
 var viewModel = {
     address: ko.observable(""),
+    searchCache: ko.observableArray(),
     mapsURL:ko.observable("https://maps.googleapis.com/maps/api/streetview?size=600x400&location=40.689556,-74.043539"),
     greeting: ko.observable("Where would you want to live?"),
     nytHeader: ko.observable("New York Times Articles"),
@@ -70,13 +96,8 @@ var viewModel = {
 };
 
 
-// NYT URL
-
-
-
 viewModel.addToAddressList = function() {
     var entry = new AddressEntry();
-    console.log(entry);
     //TODO: Add pin on map method
 
     // Check if entry already in
@@ -97,11 +118,17 @@ viewModel.addToAddressList = function() {
 
 };
 
+viewModel.clearHistory = function() {
+    viewModel.searchCache([]);
+};
+
 // Update the view
 viewModel.loadData = function() {
-    var entry = new AddressEntry();
-    //Update the greeting
+    // Push the data to the search history
+    findInfo();
+
     viewModel.greeting('So, you want to live at ' + viewModel.address() + '?');
+
 
     /*
     // Update NYT header
@@ -111,7 +138,6 @@ viewModel.loadData = function() {
     */
 
     // Center the map around the new Address
-    map.setCenter(entry.location);
 
     // Hide the default text
     viewModel.showDefault(false);
