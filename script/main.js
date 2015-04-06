@@ -1,29 +1,15 @@
 var markers = []; // Containes all saved markers and addresses
 var displayValues = [];
-var infowindow = new google.maps.InfoWindow();
+var infowindow;
 var marker;
 
 // TODO: Add NYT, Wikipedia, Yahoo Weather and StreetView data to the content string
-var contentString = "<div id='content'>"+
-    "<div id='siteNotice'>"+
-    "</div>"+
-    "<h1 id='firstHeading' class='firstHeading'>Uluru</h1>"+
-    "<button>Add to my list</button>"+
-    "<div id='bodyContent'>"+
-    "<p>Nyt</p>"+
-    "<p>Wikipedia</p>"+
-    "<p>Yahoo Weather</p>"+
-    "<p>StreetView iframe</p>"+
-    "</div>"+
-    "</div>";
+var contentString;
+
 
 // Maps functions
 /*
 map.setZoom(11);
-
-// Infowindow functions
-infowindow.setContent(results[1].formatted_address);
-infowindow.open(map, marker);
 
 
 // Sets the map on all markers in the array.
@@ -48,15 +34,20 @@ function deleteMarkers() {
   clearMarkers();
   markers = [];
 }
+
+// Infowindow functions
+infowindow.setContent(results[1].formatted_address);
+infowindow.open(map, marker);
+
 */
 
 // Add a marker to the map and push to the array.
 function addMarker(location) {
-  var infowindow = new google.maps.InfoWindow({
+  infowindow = new google.maps.InfoWindow({
         content: contentString
     });
 
-  var marker = new google.maps.Marker({
+  marker = new google.maps.Marker({
     position: location,
     map: map,
     title: 'test Title'
@@ -74,17 +65,31 @@ var findInfo = function() {
         if (status == google.maps.GeocoderStatus.OK) {
             // Center the map
             map.setCenter(results[0].geometry.location);
-            var marker = new google.maps.Marker({
+            marker = new google.maps.Marker({
                 map: map,
                 position: results[0].geometry.location
             });
 
+            // Set the contents of the info window
+            contentString = "<div id='content'><div id='siteNotice'></div><h1 id='firstHeading' class='firstHeading'>"+results[0].formatted_address+"</h1><button data-bind='click: save'>Add to my list</button>"+"<div id='bodyContent'><p>Nyt</p><p>Wikipedia</p><p>Yahoo Weather</p><p>StreetView iframe</p></div></div>";
+
+            infowindow = new google.maps.InfoWindow({
+                content: contentString
+            });
+            infowindow.open(map,marker);
+
+            google.maps.event.addListener(marker, 'click', function() {
+                infowindow.open(map,marker);
+            });
+
             // Update the entry's info
+            viewModel.greet(results[0].formatted_address);
             entry.address = results[0].formatted_address;
             entry.loc = results[0].geometry.location;
             entry.streetViewURL = 'https://maps.googleapis.com/maps/api/streetview?size=600x400&location=' + results[0].geometry.location.k+', '+results[0].geometry.location.D;
             entry.nytURL = 'http://api.nytimes.com/svc/search/v2/articlesearch.json?q=' + viewModel.address()+'&=sort=newest&api-key=773fe7f4f46bee0b96f79fa100da469a:11:71760315';
 
+            // TODO: Show info Window with NYT, Wiki, Yahoo, Street View data
             // Add to the beginning of the search history array
             viewModel.searchHistory.unshift(entry);
 
@@ -116,8 +121,6 @@ var AddressEntry = function() {
         // Add to beginning of the list
         viewModel.addressList.unshift(this);
         addMarker(this.address);
-
-
     };
 
     // Remove this entry from addressList
@@ -127,9 +130,10 @@ var AddressEntry = function() {
 
     // Show this location on the map
     this.update = function() {
+        console.log(this.loc);
         map.setCenter(this.loc);
-        infowindow.setContent(this.address);
-        infowindow.open(map, marker);
+        //infowindow.setContent(this.address);
+        //infowindow.open(map, marker);
 
     };
 
@@ -151,31 +155,12 @@ var viewModel = {
     showWarning: ko.observable(false)
 };
 
-
-viewModel.addToAddressList = function() {
-    var entry = new AddressEntry();
-    //TODO: Add pin on map method
-
-    // Check if entry already in
-    addressLength = viewModel.addressList().length;
-    for (var i = 0; i < addressLength; i++)  {
-        savedAddress = viewModel.addressList()[i].address;
-        console.log(savedAddress === entry.address());
-        if (savedAddress === entry.address()){
-            viewModel.showWarning(true);
-            return;
-        }
-    }
-    //Add the current address to addressList
-    viewModel.showWarning(false);
-    viewModel.addressList.push(entry);
-    // Add marker on the map
-    addMarker(entry.address);
-
-};
-
 viewModel.clearHistory = function() {
     viewModel.searchHistory([]);
+};
+
+viewModel.greet = function(address) {
+    viewModel.greeting('So, you want to live at ' + address + '?');
 };
 
 // Update the view
@@ -183,7 +168,12 @@ viewModel.loadData = function() {
     // Push the data to the search history
     findInfo();
 
-    viewModel.greeting('So, you want to live at ' + viewModel.address() + '?');
+    // Hide the default text
+    viewModel.showDefault(false);
+
+    // Show the button to add addresses
+    viewModel.showAddButton(true);
+
 
 
     /*
@@ -191,17 +181,7 @@ viewModel.loadData = function() {
     viewModel.nytHeader('New York Times articles about ' + viewModel.address());
     // Update Wiki header
     viewModel.wikiHeader('Wikipedia articles about ' + viewModel.address());
-    */
 
-    // Center the map around the new Address
-
-    // Hide the default text
-    viewModel.showDefault(false);
-
-    // Show the button to add addresses
-    viewModel.showAddButton(true);
-
-    /*
     // Get NYT links
     $.getJSON(viewModel.nytURL(), function(data) {
         //Loop through all articles
@@ -213,16 +193,11 @@ viewModel.loadData = function() {
             dataEntry.snippet = data.response.docs[i].snippet;
             viewModel.nytArticleList.push(dataEntry);
         }
-    }
-
+    });
     // TODO: Get Wikipedia articles
-
-
-    );
     */
 };
 
 // TODO: implement a visible locations container, to sort and search through;
-
 
 ko.applyBindings(viewModel);
