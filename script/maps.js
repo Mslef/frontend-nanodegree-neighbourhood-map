@@ -1,4 +1,5 @@
-var markers = [];
+var markers = []; // Containes all saved markers and addresses
+var displayValues = [];
 var infowindow = new google.maps.InfoWindow();
 var marker;
 
@@ -58,7 +59,6 @@ function addMarker(location) {
       infowindow.open(map,marker);
     });
 }
-
 
 
 // Sets the map on all markers in the array.

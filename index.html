@@ -53,31 +53,30 @@
         <h1 class="greeting" data-bind="text: greeting"></h1>
 
         <form class="form-container">
-            <label for="street">Street: </label><input type="text" data-bind="value: street">
-            <label for="city">City: </label><input type="text" data-bind="value: city">
+            <label for="street">Adress (Street, City, Coordinates, etc.) </label>
+            <input type="text" data-bind="value: address">
             <button data-bind="click: loadData">Submit</button>
         </form>
         <div id="panel">
           <input onclick="clearMarkers();" type="button" value="Hide Markers">
           <input onclick="showMarkers();" type="button" value="Show All Markers">
           <input onclick="deleteMarkers();" type="button" value="Delete Markers">
-          <input id="latlng" type="text" value="40.714224,-73.961452">
-          <input type="button" value="Reverse Geocode" onclick="codeLatLng()">
         </div>
     </header>
 
-        <div id="map-canvas" class="map"></div>
-        <div class="saved-locations">
-            <label>Search Entries</label><input type="text">
-            <ul class="address-list" data-bind="foreach: addressList">
-                <li class="address-list-item">
-                    <a data-bind="click: update, attr: {href: address}" ><span data-bind="text: address"></span></a>
-                    <button class="delete-entry" data-bind="click: remove">X</button>
-                </li>
-            </ul>
-            <button data-bind="click: addToAddressList, visible: showAddButton">Add Location to List</button>
-            <p class="warning" data-bind="visible: showWarning">Entry already added!</p>
-        </div>
+    <div id="map-canvas" class="map"></div>
+
+    <div class="saved-locations">
+        <label>Search Entries</label><input type="text">
+        <ul class="address-list" data-bind="foreach: addressList">
+            <li class="address-list-item">
+                <a data-bind="click: update, attr: {href: address}" ><span data-bind="text: address"></span></a>
+                <button class="delete-entry" data-bind="click: remove">X</button>
+            </li>
+        </ul>
+        <button data-bind="click: addToAddressList, visible: showAddButton">Save Location</button>
+        <p class="warning" data-bind="visible: showWarning">Entry already added!</p>
+    </div>
 
     <script src="bower_components/jquery/dist/jquery.min.js"></script>
     <script src="script/main.js"></script>
