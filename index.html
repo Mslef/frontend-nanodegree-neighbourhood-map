@@ -36,13 +36,13 @@
 
       google.maps.event.addDomListener(window, "load", initialize);
 
-      // Code from udacity"s FEND Project 2, interactive Resume
+      /*// Code from udacity"s FEND Project 2, interactive Resume
       // Vanilla JS way to listen for resizing of the window
       // and adjust map bounds
       window.addEventListener("resize", function(e) {
       // Make sure the map bounds get updated on page resize
       map.fitBounds(mapBounds);
-      });
+  });*/
 
     </script>
   </head>
@@ -55,11 +55,6 @@
             <input type="text" data-bind="value: address">
             <button data-bind="click: loadData">Submit</button>
         </form>
-        <div id="panel">
-          <input onclick="clearMarkers();" type="button" value="Hide Markers">
-          <input onclick="showMarkers();" type="button" value="Show All Markers">
-          <input onclick="deleteMarkers();" type="button" value="Delete Markers">
-        </div>
     </header>
 
     <div id="map-canvas" class="map"></div>
@@ -87,6 +82,17 @@
         </ul>
 
         <p class="warning" data-bind="visible: showWarning">Entry already added!</p>
+    </div>
+
+    <!--Hidden data loaded but not displayed-->
+    <div style="display:none">
+        <ul id="nytimes-articles" class="article-list" data-bind="foreach: nytArticleList">
+            <li class="article">
+                <a data-bind="attr: {href: URL} ">
+                <span data-bind="text: mainHeadline"> </span></a>
+                <p data-bind="text: snippet"> </p>
+            </li>
+        </ul>
     </div>
 
     <script src="script/main.js"></script>
