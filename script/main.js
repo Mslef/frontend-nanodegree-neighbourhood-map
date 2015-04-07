@@ -1,6 +1,6 @@
-var infowindow;
 var marker;
 var geocoder = new google.maps.Geocoder();
+var infowindow = new google.maps.InfoWindow();
 
 // Following variables are for the info windows
 var title = "<div id='content'><div id='siteNotice'></div><h1 id='firstHeading' class='firstHeading'>%address%</h1><div id='bodyContent'>";
@@ -63,7 +63,7 @@ var AddressEntry = function() {
     // Save to the Address List
     this.save = function() {
         // Check if entry already added
-        if($.inArray(this, viewModel.addressList())===0){
+        if($.inArray(this, viewModel.addressList())!==-1){
             viewModel.showWarning(true);
             setTimeout(function(){
                 viewModel.showWarning(false);
@@ -78,8 +78,6 @@ var AddressEntry = function() {
           position: this.loc,
           map: map,
         });
-        console.log(marker);
-
     };
 
     // Remove entry from addressList
@@ -137,7 +135,7 @@ viewModel.findInfo = function() {
     geocoder.geocode( { 'address': viewModel.address()}, function(results, status) {
         if (status == google.maps.GeocoderStatus.OK) {
             // Hide all markers except saved ones
-            //setAllMap(null);
+            setAllMap(null);
 
             // Center the map and add a marker
             map.setCenter(results[0].geometry.location);
@@ -159,13 +157,14 @@ viewModel.findInfo = function() {
 
             // Close open info widow
             if (infowindow) infowindow.close();
-            infowindow = new google.maps.InfoWindow();
 
             // Set the contents of the info window
             infowindow.setContent(createContent(entry.address, entry.nytURL, "Wiki", "Weather", entry.streetViewURL));
             infowindow.open(map,marker);
 
+            // Open the info window if the marker is clicked
             google.maps.event.addListener(marker, 'click', function() {
+                infowindow.setContent(createContent(entry.address, entry.nytURL, "Wiki", "Weather", entry.streetViewURL));
                 infowindow.open(map,marker);
             });
 
@@ -173,6 +172,7 @@ viewModel.findInfo = function() {
             viewModel.searchHistory.unshift(entry);
 
         } else {
+            // Error handling for geocode
             alert('Geocode was not successful for the following reason: ' + status);
         }
     });
