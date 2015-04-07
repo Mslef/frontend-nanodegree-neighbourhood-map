@@ -64,16 +64,6 @@ header {
     border-top:none;
 }
 
-#panel {
-        position: absolute;
-        top: 5px;
-        left: 50%;
-        margin-left: -180px;
-        z-index: 5;
-        background-color: #fff;
-        padding: 5px;
-        border: 1px solid #999;
-      }
 
 @media (max-width: 700px) {
     .container, .map-container {
