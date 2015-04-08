@@ -12,14 +12,14 @@ var bounds = new google.maps.LatLngBounds();
 
 // Create the shared infowindow with three DIV placeholders
 // One for a text string, one for the nyt articles, one for the StreetView panorama.
-var content = document.createElement("DIV");
-var title = document.createElement("DIV");
+var content = document.createElement("div");
+var title = document.createElement("div");
 content.appendChild(title);
-var streetview = document.createElement("DIV");
+var streetview = document.createElement("div");
 streetview.style.width = "250px";
 streetview.style.height = "250px";
 content.appendChild(streetview);
-var htmlContent = document.createElement("DIV");
+var htmlContent = document.createElement("div");
 htmlContent.innerHTML = "<h5 id='nyt'>New York Times articles: <button id='nyt-button' onclick='showNYT()'>Show</button></h5>";
 // TODO: Add Wiki and Yahoo Weather data and methods in this string
 content.appendChild(htmlContent);
@@ -27,8 +27,6 @@ content.appendChild(htmlContent);
 var infowindow = new google.maps.InfoWindow({
   content: content
 });
-
-
 
 // Create the marker and set up the event window function
 function createMarker(latlng, name) {
@@ -107,6 +105,7 @@ function openInfoWindow(marker) {
     infowindow.open(map, marker);
   }
 
+
 // Append NYT data to info window
 var showNYT= function () {
     if ($('#nyt-button').text() === "Show"){
@@ -117,7 +116,6 @@ var showNYT= function () {
         } else {
             //If articles were already added, display them
             $('#nyt #nytimes-articles').css("display", "block");
-
         }
     }
     else {
@@ -199,6 +197,10 @@ var AddressEntry = function(marker, city) {
     this.update = function() {
         map.setCenter(this.marker.internalPosition);
         viewModel.greet(this.address);
+
+        // Reset the nyt articles list
+        $('#nyt #nytimes-articles').html("");
+        $('#nyt-button').html("Show");
 
         // Load NYT data
         nytURL = 'http://api.nytimes.com/svc/search/v2/articlesearch.json?q=' + this.address+'&=sort=newest&api-key=773fe7f4f46bee0b96f79fa100da469a:11:71760315';
