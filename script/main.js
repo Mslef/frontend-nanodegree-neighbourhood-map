@@ -11,44 +11,45 @@ var bounds = new google.maps.LatLngBounds();
 // http://stackoverflow.com/questions/28227255/google-maps-adding-streetview-to-each-infowindow
 
 // Create the shared infowindow with three DIV placeholders
-// One for a text string, one for the nyt research results, one for the StreetView panorama.
+// One for a text string, one for the nyt articles, one for the StreetView panorama.
 var content = document.createElement("DIV");
 var title = document.createElement("DIV");
 content.appendChild(title);
 var streetview = document.createElement("DIV");
-streetview.style.width = "200px";
-streetview.style.height = "200px";
+streetview.style.width = "250px";
+streetview.style.height = "250px";
 content.appendChild(streetview);
 var htmlContent = document.createElement("DIV");
+htmlContent.innerHTML = "<h5 id='nyt'>New York Times articles: <button id='nyt-button' onclick='showNYT()'>Show</button></h5>";
+// TODO: Add Wiki and Yahoo Weather data and methods in this string
 content.appendChild(htmlContent);
 
 var infowindow = new google.maps.InfoWindow({
-  size: new google.maps.Size(150, 50),
   content: content
 });
 
-// HTML string for the infowindow's data
-var data = "<h5 id='nyt'>New York Times articles: <button id='nyt-button' onclick='showNYT()'>Show</button></h5>";
-// TODO: Add Wiki and Yahoo Weather data and methods in this string
-
-// A function to create the marker and set up the event window function
-function createMarker(latlng, name, html) {
-  var marker = new google.maps.Marker({
-    position: latlng,
-    map: map,
-    title: name,
-    zIndex: Math.round(latlng.lat() * -100000) << 5
-  });
-  marker.myHtml = html;
 
 
-  google.maps.event.addListener(marker, "click", function() {
-    clickedMarker = marker;
-    sv.getPanoramaByLocation(marker.getPosition(), 50, processSVData);
-  });
+// Create the marker and set up the event window function
+function createMarker(latlng, name) {
+    var marker = new google.maps.Marker({
+        position: latlng,
+        map: map,
+        title: name,
+    });
 
+    google.maps.event.addListener(marker, "click", function() {
+        // TODO: Find entry to use :
+        //entry.update()
+        clickedMarker = marker;
+        sv.getPanoramaByLocation(marker.getPosition(), 50, processSVData);
+        openInfoWindow(marker);
+    });
+
+    return marker;
 }
 
+// Load Street View data
 function processSVData(data, status) {
   if (status == google.maps.StreetViewStatus.OK) {
     var marker = clickedMarker;
@@ -80,11 +81,10 @@ function processSVData(data, status) {
   } else {
     openInfoWindow(clickedMarker);
     title.innerHTML = clickedMarker.getTitle() + "<br>Street View data not found for this location";
-    htmlContent.innerHTML = clickedMarker.myHtml;
     panorama.setVisible(false);
-    // alert("Street View data not found for this location.");
   }
 }
+
 // Handle the DOM ready event to create the StreetView panorama
 // as it can only be created once the DIV inside the infowindow is loaded in the DOM.
 var pin = new google.maps.MVCObject();
@@ -103,104 +103,117 @@ google.maps.event.addListenerOnce(infowindow, "domready", function() {
 // Use a 'pin' MVCObject as the order of the domready and marker click events is not garanteed.
 function openInfoWindow(marker) {
     title.innerHTML = marker.getTitle();
-    htmlContent.innerHTML = marker.myHtml;
     pin.set("position", marker.getPosition());
     infowindow.open(map, marker);
   }
 
+// Append NYT data to info window
+var showNYT= function () {
+    if ($('#nyt-button').text() === "Show"){
+        $('#nyt-button').html("Hide");
+        // If no articles were appended to the infowindow, append them
+        if ($('#nyt #nytimes-articles').length === 0) {
+            $('#nyt').append($('#nytimes-articles').clone());
+        } else {
+            //If articles were already added, display them
+            $('#nyt #nytimes-articles').css("display", "block");
 
-  // Append NYT data to info window
-  var showNYT= function () {
-      if ($('#nyt-button').text() === "Show"){
-          $('#nyt-button').html("Hide");
-          $('#nyt').append($('#nytimes-articles').clone());
-          $('#nyt #nytimes-articles').css("display", "block");
-      }
-      else {
-          $('#nyt-button').html("Show");
-          $('#nyt #nytimes-articles').css("display", "none");
-      }
-  };
-
-  // Get NYT links and load them asynchronously on the page
-  var findNYTLinks = function(nytURL) {
-      $.getJSON(nytURL, function(data) {
-          //Loop through the 5 first articles
-          var docLength = data.response.docs.length;
-          var maxIteration = Math.min(docLength, 5);
-          // Clear previously saved articles
-          viewModel.nytArticleList([]);
-          for (var i = 0; i < maxIteration; i++) {
-              var dataEntry = {};
-              dataEntry.URL = data.response.docs[i].web_url;
-              dataEntry.mainHeadline = data.response.docs[i].headline.main;
-              dataEntry.snippet = data.response.docs[i].snippet;
-              viewModel.nytArticleList.push(dataEntry);
-          }
-      });
-  };
-
-  // TODO: Get Wikipedia articles
-  var findWikiLinks = function(wikiURL) {
-      return;
-  };
-
-  // TODO: Get Yahoo data
-  var findWeather = function(weatherURL) {
-      return;
-  };
-
-  var createContent = function (address, nytURL, wikiURL, weatherURL, streetViewURL) {
-      var contentString = title.replace("%address%", address) + nyt.replace("%nyt%", nytURL) + footer;
-      return contentString;
-  };
-
-  // Class for Address entries
-  var AddressEntry = function() {
-      // Save to the Address List
-      this.save = function() {
-          // Check if entry already added
-          if($.inArray(this, viewModel.addressList())!==-1){
-              viewModel.showWarning(true);
-              setTimeout(function(){
-                  viewModel.showWarning(false);
-              }, 500);
-              return;
-          }
-
-          // Add to beginning of the list
-          viewModel.addressList.unshift(this);
-          viewModel.visibleAddress.unshift(this);
-          marker = new google.maps.Marker({
-            position: this.loc,
-            map: map,
-          });
-      };
-
-      // Remove entry from addressList
-      this.remove = function() {
-          viewModel.addressList.remove(this);
-          viewModel.visibleAddress.remove(this);
-      };
-
-      // Show location on the map
-      this.update = function() {
-          viewModel.address(this.address);
-          viewModel.findInfo();
-      };
-
-      // Hide entry
-      this.hide = function() {
-          viewModel.visibleAddress.remove(this);
-      };
-  };
-
-  // Helper function to clear the map of unsaved markers
-  function setAllMap(map) {
-    for (var i = 0; i < viewModel.markers().length; i++) {
-        viewModel.markers()[i].setMap(map);
+        }
     }
-  }
+    else {
+        $('#nyt-button').html("Show");
+        $('#nyt #nytimes-articles').css("display", "none");
+    }
+};
+
+// Get NYT links and load them asynchronously on the page
+var findNYTLinks = function(nytURL) {
+  $.getJSON(nytURL, function(data) {
+      // Clear previously saved articles
+      viewModel.nytArticleList([]);
+      //Loop through the 5 first articles
+      var docLength = data.response.docs.length;
+      if (docLength === 0) {
+        $('#nytimes-articles').html("No New York Times articles about this location, sorry!");
+        return;
+      }
+      var maxIteration = Math.min(docLength, 5);
+      for (var i = 0; i < maxIteration; i++) {
+        var dataEntry = {};
+        dataEntry.URL = data.response.docs[i].web_url;
+        dataEntry.mainHeadline = data.response.docs[i].headline.main;
+        dataEntry.snippet = data.response.docs[i].snippet;
+        viewModel.nytArticleList.push(dataEntry);
+      }
+  }).error(function() {
+        $('#nytimes-articles').html("Error loading New York Times articles, sorry!");
+  });
+};
+
+/*
+// TODO: Get Wikipedia articles
+var findWikiLinks = function(wikiURL) {
+  return;
+};
+
+// TODO: Get Yahoo data
+var findWeather = function(weatherURL) {
+  return;
+};
+*/
+
+// Class for Address entries
+var AddressEntry = function(marker, city) {
+    // Marker associated with the entry
+    this.marker = marker;
+
+    this.city = city;
+
+    // Address and localisation
+    this.address = marker.getTitle();
+    this.loc = marker.internalPosition;
+
+    // Save to the Address List
+    this.save = function() {
+        // Check if entry already added
+        if($.inArray(this, viewModel.addressList())!==-1){
+            // Warn the user that entry already added
+            viewModel.showWarning(true);
+            setTimeout(function(){
+                viewModel.showWarning(false);
+            }, 500);
+            return;
+        }
+        // Add to beginning of the list
+        viewModel.addressList.unshift(this);
+        viewModel.visibleAddress.unshift(this);
+    };
+
+    // Remove entry from addressList
+    this.remove = function() {
+        viewModel.addressList.remove(this);
+        viewModel.visibleAddress.remove(this);
+    };
+
+    // Show location on the map
+    this.update = function() {
+        map.setCenter(this.marker.internalPosition);
+        viewModel.greet(this.address);
+
+        // Load NYT data
+        nytURL = 'http://api.nytimes.com/svc/search/v2/articlesearch.json?q=' + this.address+'&=sort=newest&api-key=773fe7f4f46bee0b96f79fa100da469a:11:71760315';
+        findNYTLinks(nytURL);
+        console.log(nytURL);
+        // Close open info widow and open the marker's
+        infowindow.close();
+        openInfoWindow(marker);
+    };
+
+    // Hide entry
+    this.hide = function() {
+      viewModel.visibleAddress.remove(this);
+    };
+};
 
 // View Model and bindings
 var viewModel = {
@@ -228,41 +241,27 @@ viewModel.greet = function(address) {
 
 // Find all info for an AddressEntry Object, add it to the search history and update the view
 viewModel.findInfo = function() {
-    var entry = new AddressEntry();
     geocoder.geocode( { 'address': viewModel.address()}, function(results, status) {
         if (status == google.maps.GeocoderStatus.OK) {
             // Hide all markers except saved ones
             var latlng = results[0].geometry.location;
-            var name = results[0].formatted_address;
-            createMarker(latlng, name, data);
+            var address = results[0].formatted_address;
 
-            // Center the map and add a marker
-            map.setCenter(latlng);
+            // Create an entry with a marker
+            var entry = new AddressEntry(createMarker(latlng, address));
 
-            console.log(marker);
-            viewModel.markers.push(marker);
-
-            // Update the entry's info
-            viewModel.greet(results[0].formatted_address);
-            entry.address = results[0].formatted_address;
-            entry.loc = latlng;
-            entry.nytURL = 'http://api.nytimes.com/svc/search/v2/articlesearch.json?q=' + entry.address+'&=sort=newest&api-key=773fe7f4f46bee0b96f79fa100da469a:11:71760315';
+            // Update the greeting's info
+            viewModel.greet(address);
 
             // Add to the beginning of the search history array
-            viewModel.searchHistory.unshift(entry);
+            // TODO: Make sure entry not already in searchHistory
+            if($.inArray(entry, viewModel.searchHistory()) ===-1) {
+                viewModel.searchHistory.remove(entry);
+            } viewModel.searchHistory.unshift(entry);
 
-            // Load NYT data
-            findNYTLinks(entry.nytURL);
+            // Update the map to show the marker's info
+            entry.update();
 
-            // Close open info widow and open the marker's
-            infowindow.close();
-            openInfoWindow(marker);
-
-            // Open the info window if the marker is clicked
-            google.maps.event.addListener(marker, 'click', function() {
-                clickedMarker = marker;
-                openInfoWindow(marker);
-            });
         } else {
             // Error handling for geocode
             alert('Geocode was not successful for the following reason: ' + status);
