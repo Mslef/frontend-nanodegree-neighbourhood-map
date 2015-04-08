@@ -29,11 +29,11 @@ var infowindow = new google.maps.InfoWindow({
 
 var checkIfAdded = function(marker, list) {
     var listLength = list.length;
+    var address = marker.title;
     for (var i = 0; i < listLength; i++){
-        var address = marker.title;
         if (list[i].address === address) return list[i];
-    return "";
     }
+    return "";
 };
 
 
@@ -51,7 +51,11 @@ function createMarker(latlng, name) {
         var item = checkIfAdded(marker, viewModel.addressList());
             if (item !== "") {
                 item.update();
-            } else alert("Marker not found, make sure to save it to be able to click it!");
+            } else {
+                console.log(marker);
+                console.log(viewModel.addressList());
+                alert("Marker not found, make sure to save it to be able to click it!");
+            }
         });
 
     return marker;
@@ -145,7 +149,6 @@ var findNYTLinks = function(nytURL) {
       //Loop through the 5 first articles
       var docLength = data.response.docs.length;
       if (docLength === 0) {
-        console.log('docLength is 0');
         $('#nytimes-articles').html("No New York Times articles about this location, sorry!");
         return;
       }
