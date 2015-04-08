@@ -20,13 +20,22 @@ streetview.style.width = "250px";
 streetview.style.height = "250px";
 content.appendChild(streetview);
 var htmlContent = document.createElement("div");
-htmlContent.innerHTML = "<h5 id='nyt'>New York Times articles: <button id='nyt-button' onclick='showNYT()'>Show</button></h5>";
 // TODO: Add Wiki and Yahoo Weather data and methods in this string
 content.appendChild(htmlContent);
 
 var infowindow = new google.maps.InfoWindow({
   content: content
 });
+
+var checkIfAdded = function(marker, list) {
+    var listLength = list.length;
+    for (var i = 0; i < listLength; i++){
+        var address = marker.title;
+        if (list[i].address === address) return list[i];
+    return "";
+    }
+};
+
 
 // Create the marker and set up the event window function
 function createMarker(latlng, name) {
@@ -37,12 +46,13 @@ function createMarker(latlng, name) {
     });
 
     google.maps.event.addListener(marker, "click", function() {
-        // TODO: Find entry to use :
+        // TODO: Find entry to use to load Nyt Data:
         //entry.update()
-        clickedMarker = marker;
-        sv.getPanoramaByLocation(marker.getPosition(), 50, processSVData);
-        openInfoWindow(marker);
-    });
+        var item = checkIfAdded(marker, viewModel.addressList());
+            if (item !== "") {
+                item.update();
+            } else alert("Marker not found, make sure to save it to be able to click it!");
+        });
 
     return marker;
 }
@@ -79,6 +89,7 @@ function processSVData(data, status) {
   } else {
     openInfoWindow(clickedMarker);
     title.innerHTML = clickedMarker.getTitle() + "<br>Street View data not found for this location";
+    htmlContent.innerHTML = "<h5 id='nyt'>New York Times articles: <button id='nyt-button' onclick='showNYT()'>Show</button></h5>";
     panorama.setVisible(false);
   }
 }
@@ -101,6 +112,7 @@ google.maps.event.addListenerOnce(infowindow, "domready", function() {
 // Use a 'pin' MVCObject as the order of the domready and marker click events is not garanteed.
 function openInfoWindow(marker) {
     title.innerHTML = marker.getTitle();
+    htmlContent.innerHTML = "<h5 id='nyt'>New York Times articles: <button id='nyt-button' onclick='showNYT()'>Show</button></h5>";
     pin.set("position", marker.getPosition());
     infowindow.open(map, marker);
   }
@@ -129,9 +141,11 @@ var findNYTLinks = function(nytURL) {
   $.getJSON(nytURL, function(data) {
       // Clear previously saved articles
       viewModel.nytArticleList([]);
+      $('#nytimes-articles').html("");
       //Loop through the 5 first articles
       var docLength = data.response.docs.length;
       if (docLength === 0) {
+        console.log('docLength is 0');
         $('#nytimes-articles').html("No New York Times articles about this location, sorry!");
         return;
       }
@@ -198,14 +212,9 @@ var AddressEntry = function(marker, city) {
         map.setCenter(this.marker.internalPosition);
         viewModel.greet(this.address);
 
-        // Reset the nyt articles list
-        $('#nyt #nytimes-articles').html("");
-        $('#nyt-button').html("Show");
-
         // Load NYT data
         nytURL = 'http://api.nytimes.com/svc/search/v2/articlesearch.json?q=' + this.address+'&=sort=newest&api-key=773fe7f4f46bee0b96f79fa100da469a:11:71760315';
         findNYTLinks(nytURL);
-        console.log(nytURL);
         // Close open info widow and open the marker's
         infowindow.close();
         openInfoWindow(marker);
