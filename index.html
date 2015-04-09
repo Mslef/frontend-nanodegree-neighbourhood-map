@@ -67,7 +67,7 @@
     <div class="saved-locations">
         <form>
             <label>Search Saved Entries</label>
-            <input type="text" data-bind="value: searchValue, valueUpdate: 'afterkeydown'">
+            <input type="text" data-bind="value: searchValue, valueUpdate: 'afterkeydown', onEnter: stopEdit">
         </form>
         <ul class="address-list" data-bind="foreach: visibleAddress">
             <li class="address-list-item">

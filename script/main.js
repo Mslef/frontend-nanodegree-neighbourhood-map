@@ -1,7 +1,7 @@
 // global variables
-var marker;
 var panorama;
 
+var marker;
 var geocoder = new google.maps.Geocoder();
 var sv = new google.maps.StreetViewService();
 var bounds = new google.maps.LatLngBounds();
@@ -39,7 +39,11 @@ var checkIfAdded = function(marker, list) {
 
 // Create the marker and set up the event window function
 var createMarker = function(latlng, name) {
-    var marker = new google.maps.Marker({
+    // Clear previously opened marker
+    if (marker) marker.setMap(null);
+
+    // Create a new marker
+    marker = new google.maps.Marker({
         position: latlng,
         map: map,
         title: name,
@@ -114,7 +118,6 @@ function openInfoWindow(marker) {
     pin.set("position", marker.getPosition());
     infowindow.open(map, marker);
   }
-
 
 // Append NYT data to info window
 var showNYT= function () {
@@ -204,6 +207,8 @@ var AddressEntry = function(marker, city) {
 
     // Show location on the map
     this.update = function() {
+        // Instance marker to set on map all
+        var instanceMarker;
         map.setCenter(this.marker.internalPosition);
 
         // Update the websites heading
@@ -213,7 +218,6 @@ var AddressEntry = function(marker, city) {
         marker.setAnimation(google.maps.Animation.BOUNCE);
         window.setTimeout(function () {marker.setAnimation(null);}, 2000);
 
-
         // Load NYT data
         nytURL = 'http://api.nytimes.com/svc/search/v2/articlesearch.json?q=' + this.address+'&=sort=newest&api-key=773fe7f4f46bee0b96f79fa100da469a:11:71760315';
         findNYTLinks(nytURL);
@@ -222,11 +226,27 @@ var AddressEntry = function(marker, city) {
         infowindow.close();
         openInfoWindow(marker);
 
-        // TODO: Add function to remove all unsaved markers
+        // Add all saved flags to map
+        for (var i = 0; i < viewModel.addressList().length; i++) {
+            // Obtain the attribues of each marker
+            instanceMarker = viewModel.addressList()[i].marker;
+            instanceMarker.setMap(map);
+        }
     };
 };
 
-// View Model and bindings
+// Settings to prevent enter press key to reload the map
+// Taken from http://jsfiddle.net/dmitry_zaets/ksCSn/7/
+ko.bindingHandlers.onEnter = {
+    init: function(element, valueAccessor, _, viewModel) {
+        ko.utils.registerEventHandler(element, 'keydown', function(evt) {
+            if (evt.keyCode === 13)
+                $(element).blur();
+        });
+    }
+};
+
+// View Model bindings
 var viewModel = {
     address: ko.observable(""), // Address in the view's search bar
     searchHistory: ko.observableArray(), // Search history
@@ -234,9 +254,12 @@ var viewModel = {
     markers: ko.observableArray(), // Containes all saved markers and addresses
     greeting: ko.observable("Where would you want to live?"),
     nytArticleList: ko.observableArray(), // List of 5 NYT articles
-    wikiArticleList: ko.observableArray(), // List of Wiki articles
     addressList: ko.observableArray(), // All addresses
     showWarning: ko.observable(false) // Show warning if entry already saved
+};
+
+viewModel.stopEdit = function() {
+    this.edit(false);
 };
 
 // Array shown in the view
@@ -263,11 +286,8 @@ viewModel.visibleAddress = ko.computed(function () {
         viewModel.searchValue("");
         return viewModel.addressList();
     }
-
     return returnArray;
-
 });
-
 
 // Clear the search history
 viewModel.clearHistory = function() {
@@ -299,6 +319,7 @@ viewModel.findInfo = function() {
             alert('Geocode was not successful for the following reason: ' + status);
         }
     });
+
 };
 
 ko.applyBindings(viewModel);
