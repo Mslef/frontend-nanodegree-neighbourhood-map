@@ -17,7 +17,8 @@
             var mapOptions = {
                 zoom: 12,
                 center: haightAshbury,
-                mapTypeId: google.maps.MapTypeId.TERRAIN
+                mapTypeId: google.maps.MapTypeId.TERRAIN,
+                scrollwheel: false
             };
             map = new google.maps.Map(document.getElementById("map-canvas"),
             mapOptions);
@@ -41,17 +42,34 @@
         <h1 class="greeting" data-bind="text: greeting"></h1>
 
         <form class="form-container">
-            <label for="street">Adress (Street, City, Coordinates, etc.) </label>
+            <label for="street">Search for adress (Street, City, Coordinates, etc.) </label>
             <input type="text" data-bind="value: address">
             <button data-bind="click: findInfo">Submit</button>
         </form>
     </header>
 
+    <div class="search-history">
+        <div class="row">
+            <label>Search history</label>
+            <button class="clear-history" data-bind="click: clearHistory">Clear</button>
+        </div>
+        <p class="warning" data-bind="visible: showWarning">Entry already added!</p>
+        <ul class="address-list" data-bind="foreach: searchHistory">
+            <li class="address-list-item">
+                <a data-bind="click: update"><span data-bind="text: address"></span></a>
+                <button class="save-entry" data-bind="click: save">Save</button>
+            </li>
+        </ul>
+    </div>
+
     <div id="map-canvas" class="map"></div>
 
     <div class="saved-locations">
-        <label>Search Entries</label><input type="text" data-bind="text: searchValue">
-        <ul class="address-list" data-bind="foreach: addressList">
+        <form>
+            <label>Search Saved Entries</label>
+            <input type="text" data-bind="value: searchValue, valueUpdate: 'afterkeydown'">
+        </form>
+        <ul class="address-list" data-bind="foreach: visibleAddress">
             <li class="address-list-item">
                 <a data-bind="click: update, attr: {href: address}" ><span data-bind="text: address"></span></a>
                 <button class="delete-entry" data-bind="click: remove">X</button>
@@ -59,20 +77,8 @@
         </ul>
     </div>
 
-    <div class="search-history">
-        <div class="row">
-            <h4>Search history</h4>
-            <button class="clear-history" data-bind="click: clearHistory">Clear</button>
-        </div>
-        <ul class="address-list" data-bind="foreach: searchHistory">
-            <li class="address-list-item">
-                <a data-bind="click: update"><span data-bind="text: address"></span></a>
-                <button class="save-entry" data-bind="click: save">Save</button>
-            </li>
-        </ul>
 
-        <p class="warning" data-bind="visible: showWarning">Entry already added!</p>
-    </div>
+
 
     <!--Hidden data loaded but not displayed-->
     <div style="display:none">

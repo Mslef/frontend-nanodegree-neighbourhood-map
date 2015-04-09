@@ -1,6 +1,5 @@
 // global variables
 var marker;
-var clickedMarker;
 var panorama;
 
 var geocoder = new google.maps.Geocoder();
@@ -20,17 +19,18 @@ streetview.style.width = "250px";
 streetview.style.height = "250px";
 content.appendChild(streetview);
 var htmlContent = document.createElement("div");
-// TODO: Add Wiki and Yahoo Weather data and methods in this string
 content.appendChild(htmlContent);
 
 var infowindow = new google.maps.InfoWindow({
   content: content
 });
 
+//Function to check if a marker is in a list of address entries
 var checkIfAdded = function(marker, list) {
     var listLength = list.length;
     var address = marker.title;
     for (var i = 0; i < listLength; i++){
+        // Return the address entry object
         if (list[i].address === address) return list[i];
     }
     return "";
@@ -38,65 +38,58 @@ var checkIfAdded = function(marker, list) {
 
 
 // Create the marker and set up the event window function
-function createMarker(latlng, name) {
+var createMarker = function(latlng, name) {
     var marker = new google.maps.Marker({
         position: latlng,
         map: map,
         title: name,
+        animation: google.maps.Animation.BOUNCE
     });
 
     google.maps.event.addListener(marker, "click", function() {
-        // TODO: Find entry to use to load Nyt Data:
-        //entry.update()
+        // Make sure flag was saved to be clickable
         var item = checkIfAdded(marker, viewModel.addressList());
             if (item !== "") {
                 item.update();
             } else {
-                console.log(marker);
-                console.log(viewModel.addressList());
                 alert("Marker not found, make sure to save it to be able to click it!");
             }
         });
 
     return marker;
-}
+};
+
+// Set up the streetview panorama
+var showPano = function() {
+    panorama.setPano(data.location.pano);
+    panorama.setPov({
+      heading: 270,
+      pitch: 0,
+      zoom: 1
+    });
+    panorama.setVisible(true);
+};
 
 // Load Street View data
-function processSVData(data, status) {
-  if (status == google.maps.StreetViewStatus.OK) {
-    var marker = clickedMarker;
-    openInfoWindow(clickedMarker);
+var processSVData = function(data, status) {
+    if (status == google.maps.StreetViewStatus.OK) {
+        if (!!panorama && !!panorama.setPano) {
+            showPano();
 
-    if (!!panorama && !!panorama.setPano) {
-
-      panorama.setPano(data.location.pano);
-      panorama.setPov({
-        heading: 270,
-        pitch: 0,
-        zoom: 1
-      });
-      panorama.setVisible(true);
-
-      google.maps.event.addListener(marker, 'click', function() {
-
-        var markerPanoID = data.location.pano;
-        // Set the Pano to use the passed panoID
-        panorama.setPano(markerPanoID);
-        panorama.setPov({
-          heading: 270,
-          pitch: 0,
-          zoom: 1
-        });
-        panorama.setVisible(true);
-      });
+            google.maps.event.addListener(marker, 'click', function() {
+                var markerPanoID = data.location.pano;
+                // Set the Pano to use the passed panoID
+                panorama.setPano(markerPanoID);
+                showPano();
+            });
+        }
+    } else {
+    // Error handling for the Street view request
+        title.innerHTML = marker.getTitle() + "<br>Street View data not found for this location";
+        htmlContent.innerHTML = "<h5 id='nyt'>New York Times articles: <button id='nyt-button' onclick='showNYT()'>Show</button></h5>";
+        panorama.setVisible(false);
     }
-  } else {
-    openInfoWindow(clickedMarker);
-    title.innerHTML = clickedMarker.getTitle() + "<br>Street View data not found for this location";
-    htmlContent.innerHTML = "<h5 id='nyt'>New York Times articles: <button id='nyt-button' onclick='showNYT()'>Show</button></h5>";
-    panorama.setVisible(false);
-  }
-}
+};
 
 // Handle the DOM ready event to create the StreetView panorama
 // as it can only be created once the DIV inside the infowindow is loaded in the DOM.
@@ -117,6 +110,7 @@ google.maps.event.addListenerOnce(infowindow, "domready", function() {
 function openInfoWindow(marker) {
     title.innerHTML = marker.getTitle();
     htmlContent.innerHTML = "<h5 id='nyt'>New York Times articles: <button id='nyt-button' onclick='showNYT()'>Show</button></h5>";
+    // TODO: Add Wiki and Yahoo Weather data and methods in this string
     pin.set("position", marker.getPosition());
     infowindow.open(map, marker);
   }
@@ -201,31 +195,34 @@ var AddressEntry = function(marker, city) {
         }
         // Add to beginning of the list
         viewModel.addressList.unshift(this);
-        viewModel.visibleAddress.unshift(this);
     };
 
     // Remove entry from addressList
     this.remove = function() {
         viewModel.addressList.remove(this);
-        viewModel.visibleAddress.remove(this);
     };
 
     // Show location on the map
     this.update = function() {
         map.setCenter(this.marker.internalPosition);
-        viewModel.greet(this.address);
+
+        // Update the websites heading
+        viewModel.greeting('So, you want to live at ' + this.address + '?');
+
+        // Simple bouncing function for marker;
+        marker.setAnimation(google.maps.Animation.BOUNCE);
+        window.setTimeout(function () {marker.setAnimation(null);}, 2000);
+
 
         // Load NYT data
         nytURL = 'http://api.nytimes.com/svc/search/v2/articlesearch.json?q=' + this.address+'&=sort=newest&api-key=773fe7f4f46bee0b96f79fa100da469a:11:71760315';
         findNYTLinks(nytURL);
+
         // Close open info widow and open the marker's
         infowindow.close();
         openInfoWindow(marker);
-    };
 
-    // Hide entry
-    this.hide = function() {
-      viewModel.visibleAddress.remove(this);
+        // TODO: Add function to remove all unsaved markers
     };
 };
 
@@ -239,18 +236,42 @@ var viewModel = {
     nytArticleList: ko.observableArray(), // List of 5 NYT articles
     wikiArticleList: ko.observableArray(), // List of Wiki articles
     addressList: ko.observableArray(), // All addresses
-    visibleAddress: ko.observableArray(), // Visible addresses
     showWarning: ko.observable(false) // Show warning if entry already saved
 };
+
+// Array shown in the view
+viewModel.visibleAddress = ko.computed(function () {
+    var returnArray = [];
+    maxLength = viewModel.addressList().length;
+
+    if (viewModel.searchValue() === "")
+        return viewModel.addressList();
+
+    for(var i = 0; i < maxLength; i++) {
+        // Make sure all letters are lower case for the search
+        var value = viewModel.searchValue().toLowerCase();
+        var entry = viewModel.addressList()[i].address.toLowerCase();
+        if (entry.search(value)!== -1) {
+            returnArray.push(viewModel.addressList()[i]);
+        }
+    }
+
+    // Warn the user if no entries corresponds to the search value
+    if (returnArray.length === 0) {
+        //show a warning and reset the visible addresses
+        alert("Value not found!");
+        viewModel.searchValue("");
+        return viewModel.addressList();
+    }
+
+    return returnArray;
+
+});
+
 
 // Clear the search history
 viewModel.clearHistory = function() {
     viewModel.searchHistory([]);
-};
-
-// Update the greeting to reflect searched address
-viewModel.greet = function(address) {
-    viewModel.greeting('So, you want to live at ' + address + '?');
 };
 
 // Find all info for an AddressEntry Object, add it to the search history and update the view
@@ -263,9 +284,6 @@ viewModel.findInfo = function() {
 
             // Create an entry with a marker
             var entry = new AddressEntry(createMarker(latlng, address));
-
-            // Update the greeting's info
-            viewModel.greet(address);
 
             // Add to the beginning of the search history array
             // TODO: Make sure entry not already in searchHistory
@@ -282,24 +300,5 @@ viewModel.findInfo = function() {
         }
     });
 };
-/*
-Following code to show markers on the map an object array
-// Read the data from markers json object
-for (var i = 0; i < markers.length; i++) {
-  // obtain the attribues of each marker
-  var lat = parseFloat(markers[i].lat);
-  var lng = parseFloat(markers[i].lng);
-  var point = new google.maps.LatLng(lat, lng);
-  var html = markers[i].html;
-  var label = markers[i].label;
-  // create the marker
-  var marker = createMarker(point, label, html);
-  bounds.extend(point);
-}
-
-// Zoom and center the map to fit the markers
-map.fitBounds(bounds);
-*/
-// TODO: implement a visible locations container, to sort and search through;
 
 ko.applyBindings(viewModel);
