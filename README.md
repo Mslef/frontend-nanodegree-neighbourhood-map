@@ -1,11 +1,11 @@
 # Frontend Nanodegree Neighbourhood Map
 
-Cool map that allows to find info about certain locations.
+Cool map that allows to find info about certain locations. To run, simply click the index.html file and enjoy!
 
-# Finding and saving addresses 
+# Finding and saving addresses
 There are 2 ways to find addresses :
-- Search with an address, postal codes, city, or even coordinates. 
-- Click the map 
+- Search with an address, postal codes, city, or even coordinates.
+- Click the map
 
 Searched addresses will apear in a search history list, with the latest entry at the top.
 
@@ -23,9 +23,9 @@ entry.
 
 To show data from an address, search for it, click on the list view or click on its marker on the map.
 
-The Street View data will load on click, and to open the New York Times articles list, simply click 
+The Street View data will load on click, and to open the New York Times articles list, simply click
 on the show button in the info window. If there were articles relating to your search, it will be
 shown in the info window.
 
-Note that to return results from the new york times, you have to search for broad terms, such as countries, 
+Note that to return results from the new york times, you have to search for broad terms, such as countries,
 states, counties, cities, etc.

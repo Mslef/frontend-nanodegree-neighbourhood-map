@@ -1,7 +1,10 @@
 // global variables
-var panorama;
+"use strict";
 
+var panorama;
 var marker;
+var infowindow = new google.maps.InfoWindow();
+
 var geocoder = new google.maps.Geocoder();
 var sv = new google.maps.StreetViewService();
 var bounds = new google.maps.LatLngBounds();
@@ -162,18 +165,6 @@ var findNYTLinks = function(nytURL) {
   });
 };
 
-/*
-// TODO: Get Wikipedia articles
-var findWikiLinks = function(wikiURL) {
-  return;
-};
-
-// TODO: Get Yahoo data
-var findWeather = function(weatherURL) {
-  return;
-};
-*/
-
 // Class for Address entries
 var AddressEntry = function(marker, city) {
     // Marker associated with the entry
@@ -219,7 +210,7 @@ var AddressEntry = function(marker, city) {
         window.setTimeout(function () {marker.setAnimation(null);}, 2000);
 
         // Load NYT data
-        nytURL = 'http://api.nytimes.com/svc/search/v2/articlesearch.json?q=' + this.address+'&=sort=newest&api-key=773fe7f4f46bee0b96f79fa100da469a:11:71760315';
+        var nytURL = 'http://api.nytimes.com/svc/search/v2/articlesearch.json?q=' + this.address+'&=sort=newest&api-key=773fe7f4f46bee0b96f79fa100da469a:11:71760315';
         findNYTLinks(nytURL);
 
         // Close open info widow and open the marker's
